@@ -49,8 +49,8 @@ export class ModelItem {
   }
 
   set value(newVal) {
-    console.log('modelitem.setvalue oldVal', this.value);
-    console.log('modelitem.setvalue newVal', newVal);
+    // console.log('modelitem.setvalue oldVal', this.value);
+    // console.log('modelitem.setvalue newVal', newVal);
 
     if (newVal.nodeType === Node.DOCUMENT_NODE) {
       // this.node.replaceWith(newVal.firstElementChild);

@@ -15,6 +15,7 @@ export class FxModel extends HTMLElement {
 
     this.instances = [];
     this.modelItems = [];
+    this.changed = [];
     this.defaultContext = {};
 
     // this.mainGraph = new DepGraph(false);
@@ -184,14 +185,22 @@ export class FxModel extends HTMLElement {
    */
   recalculate() {
     console.group('### recalculate');
-    console.log('recalculate instances ', this.instances);
+    // console.log('recalculate instances ', this.instances);
+    console.log('recalculate modelItems ', this.modelItems);
 
     console.time('recalculate');
+    const subgraph = this._createSubGraph();
     const v = this.mainGraph.overallOrder();
     v.forEach(path => {
       const node = this.mainGraph.getNodeData(path);
       const modelItem = this.getModelItem(node);
 
+      if(modelItem && modelItem.changed){
+        console.log('changed', this.changed);
+        console.log('changed item path', modelItem.path);
+        console.log('changed item path', this.mainGraph.dependentsOf(modelItem.path,false));
+
+      }
       if (modelItem && path.includes(':')) {
         const property = path.split(':')[1];
         if (property) {
@@ -199,26 +208,62 @@ export class FxModel extends HTMLElement {
             const expr = modelItem.bind[property];
             const compute = evaluateXPath(expr, modelItem.node, this);
             modelItem.value = compute;
+            console.log(
+                `calculate path ${path} - Expr:'${expr}' computed`,
+                modelItem.value,
+            );
           } else if (property !== 'constraint' && property !== 'type') {
             const expr = modelItem.bind[property];
-            if (expr) {
-              const compute = evaluateXPathToBoolean(expr, modelItem.node, this);
-              modelItem[property] = compute;
+            // modelItem[property] = this._evalExpr(expr);
+            // if (expr) {
+              this._evalExpr(expr, modelItem, property);
               console.log(
                 `recalculating path ${path} - Expr:'${expr}' computed`,
                 modelItem[property],
               );
-            }
+            // }
           }
         }
       }
     });
+    // ### reset changed flags
+    this.modelItems.forEach(item =>{
+      item.changed=false;
+    });
+    this.changed = [];
     console.timeEnd('recalculate');
     console.log(
       `recalculate finished with modelItems ${this.modelItems.length} item(s)`,
       this.modelItems,
     );
     console.groupEnd();
+  }
+
+
+  /**
+   * todo: ask Marting wether optimization makes sense at all
+   * @param expr
+   * @param modelItem
+   * @param property
+   * @private
+   */
+  _evalExpr(expr, modelItem, property) {
+    if(!expr) return;
+    // ### avoid cost of evaluation by checking for common static strings
+    if (expr === 'true()') {
+      modelItem[property] = true;
+    } else if (expr === 'false()') {
+      modelItem[property] = false;
+    } else {
+      const compute = evaluateXPathToBoolean(expr, modelItem.node, this);
+      modelItem[property] = compute;
+    }
+  }
+
+  _createSubGraph(){
+    const sGraph = new DepGraph(false);
+
+    return null;
   }
 
   /**

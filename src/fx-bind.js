@@ -138,6 +138,7 @@ export class FxBind extends foreElementMixin(HTMLElement) {
     this.relevant = this.getAttribute('relevant');
     this.type = this.hasAttribute('type') ? this.getAttribute('type') : FxBind.TYPE_DEFAULT;
     this.calculate = this.getAttribute('calculate');
+    this.constraint = this.getAttribute('constraint');
   }
 
   /**
@@ -156,8 +157,9 @@ export class FxBind extends foreElementMixin(HTMLElement) {
 
     if (this.bindType === 'xml') {
       this._evalInContext();
-      this._buildBindGraph();
+      // creating modelItems before building the graph does no harm
       this._createModelItems();
+      this._buildBindGraph();
     }
 
     // ### process child bindings
@@ -178,6 +180,7 @@ export class FxBind extends foreElementMixin(HTMLElement) {
     }
 */
 
+  // todo: ? add modelItems to graph directly instead of node ?
   _buildBindGraph() {
     if (this.bindType === 'xml') {
       this.nodeset.forEach(node => {
